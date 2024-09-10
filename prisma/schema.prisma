@@ -1,0 +1,35 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./sqlite/dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model PaymentData {
+  id         String   @id @default(uuid())
+  name       String // Máximo de 15 caracteres, mas no SQLite isso não precisa ser especificado
+  age        String // Máximo de 4 caracteres
+  address    String // Máximo de 34 caracteres
+  cpf        String // Máximo de 11 caracteres
+  paidAmount Float // Valor com até 2 casas decimais
+  birthDate  String // Formato de data 'YYYYMMDD', mas mantido como String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("dados_gerais")
+}
+
+model PermanentData {
+  id         String   @id @default(uuid())
+  name       String // Máximo de 15 caracteres, mas no SQLite isso não precisa ser especificado
+  age        String // Máximo de 4 caracteres
+  address    String // Máximo de 34 caracteres
+  cpf        String // Máximo de 11 caracteres
+  paidAmount Float // Valor com até 2 casas decimais
+  birthDate  String // Formato de data 'YYYYMMDD', mas mantido como String
+  createdAt  DateTime @default(now())
+
+  @@map("dados_permanentes")
+}
