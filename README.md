@@ -143,4 +143,5 @@ Caso haja algum problema com o SQLite (que é usado somente para desenvolvimento
     npx prisma migrate deploy
 
 ## Agradecimento:
-Obrigado por utilizar nossa API! Se tiver dúvidas ou precisar de suporte adicional, não hesite em entrar em contato. Apreciamos seu feedback e estamos aqui para ajudar.
+Obrigado pela escolha! Se tiver dúvidas ou precisar de suporte adicional, não hesite em entrar em contato. Apreciamos seu feedback e estamos aqui para ajudar.
+
