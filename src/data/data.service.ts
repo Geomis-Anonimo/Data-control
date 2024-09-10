@@ -33,20 +33,20 @@ export class DataService {
     }
   }
 
-  async getById(id: string): Promise<any> {
+  async findById(id: string): Promise<any> {
     const data = await this.prisma.paymentData.findFirst({
       where: { id },
     });
 
     if (!data) {
-      throw new NotFoundException(`Data with ID ${id} not found`);
+      throw new NotFoundException(`Dado com Id ${id} não encontrado`);
     }
 
     return data;
   }
 
   async update(id: string, updateData: any): Promise<any> {
-    const existingData = await this.prisma.paymentData.findUnique({
+    const existingData = await this.prisma.paymentData.findFirst({
       where: { id },
     });
 
@@ -61,7 +61,7 @@ export class DataService {
   }
 
   async delete(id: string): Promise<any> {
-    const existingData = await this.prisma.paymentData.findUnique({
+    const existingData = await this.prisma.paymentData.findFirst({
       where: { id },
     });
 

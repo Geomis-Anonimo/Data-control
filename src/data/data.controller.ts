@@ -34,4 +34,10 @@ export class DataController {
     await this.dataService.delete(id);
     return { message: 'Data deleted successfully' };
   }
+
+  @Get(':id')
+  async findById(@Param('id') id: string) {
+    const getById = await this.dataService.findById(id);
+    return getById;
+  }
 }
