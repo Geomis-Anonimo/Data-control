@@ -2,12 +2,12 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaService } from 'src/prisma/prisma.service';
-import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs'; // Importando ExcelJS para leitura em stream
 
 @Injectable()
 export class UploadService {
   private readonly uploadDir = path.join(__dirname, '..', 'uploads');
-  private readonly batchSize = 100;
+  private readonly batchSize = 100; // Define o tamanho do batch
 
   constructor(private readonly prisma: PrismaService) {
     if (!fs.existsSync(this.uploadDir)) {
@@ -23,18 +23,19 @@ export class UploadService {
     const fileExtension = path.extname(file.originalname).toLowerCase();
     const filePath = path.join(this.uploadDir, file.originalname);
 
+    // Salva o arquivo no diretório de uploads
     fs.writeFileSync(filePath, file.buffer);
 
     try {
       if (fileExtension === '.txt') {
         await this.processTextFile(filePath);
       } else if (fileExtension === '.xlsx') {
-        await this.processExcelFile(filePath);
+        await this.processExcelFile(filePath); // Lendo Excel via stream
       } else {
         throw new BadRequestException('Tipo de arquivo não permitido');
       }
     } finally {
-      fs.unlinkSync(filePath);
+      fs.unlinkSync(filePath); // Remove o arquivo após o processamento
     }
   }
 
@@ -75,36 +76,50 @@ export class UploadService {
     }
   }
 
+  // Novo método para processar arquivos Excel com leitura em stream
   private async processExcelFile(filePath: string): Promise<void> {
     try {
-      const workbook = XLSX.readFile(filePath);
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      const workbook = new ExcelJS.Workbook();
+      const stream = fs.createReadStream(filePath); // Lê o arquivo como stream
 
-      if (!Array.isArray(data)) {
-        throw new BadRequestException('Formato de dados inválido no arquivo Excel');
-      }
+      // Lê o arquivo Excel em stream
+      await workbook.xlsx.read(stream);
+      const worksheet = workbook.getWorksheet(1); // Pega a primeira aba (sheet)
 
-      for (let i = 0; i < data.length; i += this.batchSize) {
-        const batch = data.slice(i, i + this.batchSize);
-        const formattedData = batch.map(row => {
-          if (Array.isArray(row) && row.length) {
-            const [name = '', age = '', address = '', cpf = '', paidAmount = 0, birthDate = ''] = row;
+      const batch = [];
 
-            return {
-              name: name as string,
-              age: age as string,
-              address: address as string,
-              cpf: cpf as string,
-              paidAmount: parseFloat(paidAmount as string) || 0,
-              birthDate: birthDate as string,
-            };
-          }
-          return null;
-        }).filter(row => row !== null);
+      // Processa cada linha da planilha Excel
+      worksheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
+        // Leitura dos dados da linha
+        const [name = '', age = '', address = '', cpf = '', paidAmount = 0, birthDate = ''] = row.values;
 
+        const formattedRow = {
+          name: name as string,
+          age: age as string,
+          address: address as string,
+          cpf: cpf as string,
+          paidAmount: parseFloat(paidAmount as string) || 0,
+          birthDate: birthDate as string,
+        };
+
+        // Adiciona ao batch
+        batch.push(formattedRow);
+
+        // Quando o batch atingir o tamanho definido, salva no banco
+        if (batch.length >= this.batchSize) {
+          await this.prisma.paymentData.createMany({
+            data: batch as any[],
+          });
+
+          // Limpa o batch após salvar no banco
+          batch.length = 0;
+        }
+      });
+
+      // Salva o restante dos dados se houver algo no batch
+      if (batch.length > 0) {
         await this.prisma.paymentData.createMany({
-          data: formattedData as any[],
+          data: batch as any[],
         });
       }
     } catch (error) {

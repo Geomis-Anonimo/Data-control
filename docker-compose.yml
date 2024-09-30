@@ -7,5 +7,5 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-      - ./prisma/sqlite:/app/prisma/sqlite # Persistir o arquivo do banco de dados
+      - ./prisma/sqlite:/app/prisma/sqlite
     command: npm run start:dev
