@@ -11,7 +11,8 @@ export class DataController {
     @Query('pageSize') pageSize: string
   ) {
     const pageNumber = parseInt(page, 10);
-    const pageSizeNumber = parseInt(pageSize, 10);
+    const maxPageSize = 100; // Definir um limite máximo para o tamanho da página
+    const pageSizeNumber = Math.min(parseInt(pageSize, 10), maxPageSize);
 
     if (isNaN(pageNumber) || isNaN(pageSizeNumber)) {
       throw new BadRequestException('Parâmetros de página e tamanho da página devem ser números válidos');
